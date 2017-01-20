@@ -8,6 +8,7 @@
 #include "SEGGER_RTT.h"
 
 APP_TIMER_DEF(m_battery_timer_id);                        /**< Battery timer. */
+APP_TIMER_DEF(m_heart_rate_timer_id);                     /**< Heart rate measurement timer. */
 
 void timers_init(void)
 {
@@ -15,18 +16,27 @@ void timers_init(void)
     // Initialize timer module.
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
 
-    // Create battery measurement timers.
+    // Create battery measurement timer.
 		uint32_t err_code;
 		err_code = app_timer_create(&m_battery_timer_id, APP_TIMER_MODE_REPEATED, battery_measurement_timeout_handler);
 		APP_ERROR_CHECK(err_code); 
+	
+		// Create HR measurement timer.
+		err_code = app_timer_create(&m_heart_rate_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                heart_rate_meas_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 /**@brief Function for starting timers.
  */
 void application_timers_start(void)
 {
-		 uint32_t err_code;
-		 err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
-		 APP_ERROR_CHECK(err_code); 
+		uint32_t err_code;
+		err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
+		APP_ERROR_CHECK(err_code); 
+	
+		err_code = app_timer_start(m_heart_rate_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
 
 }
 
@@ -37,7 +47,11 @@ void battery_measurement_timeout_handler(void * p_context)
 		//SEGGER_RTT_WriteString(0, "battery_measurement_timeout \n");
 }
 
-
+static void heart_rate_meas_timeout_handler(void * p_context)
+{
+		rri_update();
+		hrm_update();
+}
 
 void uart_init(void)
 {
@@ -224,3 +238,4 @@ void nus_data_handler (ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
 		// do nothing... handling the data received from BLE_NUS tx_char
 }
+

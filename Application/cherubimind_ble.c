@@ -33,17 +33,20 @@
 #include "ble_bas.h"
 #include "ble_nus.h"
 #include "SEGGER_RTT.h"
+#include "ble_hrs.h"
 
 uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                            /**< Handle of the current connection. */
 
 // Declare all services structure used in application.
 static ble_bas_t m_bas;                                   /**< Structure used to identify the battery service. */
 static ble_nus_t m_nus;
+static ble_hrs_t m_hrs;                                   /**< Structure used to identify the heart rate service. */
 
 // Use UUIDs for service(s) used in application.
 ble_uuid_t m_adv_uuids[] = {{BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE},
 														{BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE},
-														{BLE_UUID_NUS_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
+														{BLE_UUID_NUS_SERVICE, BLE_UUID_TYPE_BLE},
+														{BLE_UUID_HEART_RATE_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
 /**@brief Callback function for asserts in the SoftDevice.
  *
@@ -241,15 +244,15 @@ void gap_params_init(void)
  */
 void services_init(void)
 {
-		uint32_t                           err_code;
+		uint32_t err_code;
 
 		// Initialize BAS Service.
-		ble_bas_init_t                     bas_init;
+		ble_bas_init_t bas_init;
 		memset(&bas_init, 0, sizeof(bas_init));
 		bas_init.evt_handler = NULL;
 		bas_init.support_notification = true;
-		bas_init.p_report_ref         = NULL;
-    bas_init.initial_batt_level   = 100;
+		bas_init.p_report_ref = NULL;
+    bas_init.initial_batt_level = 100;
 		BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.cccd_write_perm);
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init.battery_level_char_attr_md.write_perm);
@@ -257,21 +260,28 @@ void services_init(void)
 		err_code = ble_bas_init(&m_bas, &bas_init);
 		APP_ERROR_CHECK(err_code);
 
-		//Initialize NUS Service
+		// Initialize NUS Service
 		ble_nus_init_t nus_init;
 		memset(&nus_init,0,sizeof(nus_init));
 		nus_init.data_handler = NULL;
 		err_code = ble_nus_init(&m_nus, &nus_init);
 		APP_ERROR_CHECK(err_code);
-	
-		/*// Initialize YYY Service.
-		memset(&yys_init, 0, sizeof(yys_init));
-		yys_init.evt_handler                  = on_yys_evt;
-		yys_init.ble_yy_initial_value.counter = 0;
-
-		err_code = ble_yy_service_init(&yys_init, &yy_init);
-		APP_ERROR_CHECK(err_code);
-     */
+		
+		// Initialize HR Service
+		ble_hrs_init_t hrs_init;
+		memset(&hrs_init,0,sizeof(hrs_init));
+		uint8_t body_sensor_location = BLE_HRS_BODY_SENSOR_LOCATION_EAR_LOBE;
+		hrs_init.evt_handler                 = NULL;
+    hrs_init.is_sensor_contact_supported = true;  // set true if body sensor contact detection is supported.
+    hrs_init.p_body_sensor_location      = &body_sensor_location;
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&hrs_init.hrs_hrm_attr_md.cccd_write_perm);	// hrm: heart rate measurement
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_hrm_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_hrm_attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&hrs_init.hrs_bsl_attr_md.read_perm);				// bsl: body sensor location
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_bsl_attr_md.write_perm);
+		err_code = ble_hrs_init(&m_hrs, &hrs_init);
+    APP_ERROR_CHECK(err_code);
+		
 }
 
 
@@ -471,6 +481,8 @@ void ble_evt_dispatch(ble_evt_t * p_ble_evt)
     // add calls to _on_ble_evt functions from each service your application is using, Little Bei
     ble_bas_on_ble_evt(&m_bas, p_ble_evt);
 		ble_nus_on_ble_evt(&m_nus, p_ble_evt);
+		ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
+
 }
 
 
@@ -570,7 +582,8 @@ void advertising_init(void)
 		// Build advertising data struct to pass into @ref ble_advertising_init.
     memset(&advdata, 0, sizeof(advdata));
 
-    advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+    advdata.name_type               = BLE_ADVDATA_SHORT_NAME;
+		advdata.short_name_len 					= 3;
     advdata.include_appearance      = true;
     advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
     advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
@@ -742,3 +755,32 @@ void battery_level_update(void)
     }
 }
 
+void hrm_update(void)
+{
+		static uint16_t heart_rate = 59;
+		heart_rate++;
+		if ( heart_rate > 100 ) 
+			heart_rate = 60;
+		uint32_t err_code;
+		err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
+		if ((err_code != NRF_SUCCESS) &&
+					(err_code != NRF_ERROR_INVALID_STATE) &&
+					(err_code != BLE_ERROR_NO_TX_PACKETS) &&
+					(err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING))
+				APP_ERROR_HANDLER(err_code);
+}
+
+void rri_update(void)
+{
+		static uint16_t rr_interval = 795;
+		//rr_interval += 5;
+		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
+		//rr_interval += 5;
+		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
+		//rr_interval += 5;
+		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
+		//rr_interval += 5;
+		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
+		if ( rr_interval > 1200 )
+				rr_interval = 795;
+}

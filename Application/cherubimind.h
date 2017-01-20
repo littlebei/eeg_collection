@@ -5,7 +5,7 @@
 #define APP_TIMER_OP_QUEUE_SIZE         10                                           /**< Size of timer operation queues. */
 
 #define BATTERY_LEVEL_MEAS_INTERVAL      APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)  /**< Battery level measurement interval (ticks). */
-
+#define HEART_RATE_MEAS_INTERVAL	APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER)
 // Macro define used by UART
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
 #define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
@@ -54,3 +54,6 @@ void uart_event_handle(app_uart_evt_t * p_event);
 void nus_data_handler (ble_nus_t * p_nus, uint8_t * p_data, uint16_t length);
 uint32_t data_send_by_nus(uint8_t * p_string, uint16_t length);
 void battery_level_update(void);
+static void heart_rate_meas_timeout_handler(void * p_context);
+void hrm_update(void);
+void rri_update(void);

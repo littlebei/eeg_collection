@@ -192,3 +192,7 @@ void buttons_leds_init(bool * p_erase_bonds);
 uint32_t data_send_by_nus(uint8_t * p_string, uint16_t length);
 
 void battery_level_update(void);
+
+void hrm_update(void);
+
+void rri_update(void);

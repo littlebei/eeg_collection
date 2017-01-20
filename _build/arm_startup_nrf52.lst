@@ -634,31 +634,32 @@ ents\libraries\usbd\class\hid\mouse -I..\components\libraries\usbd\class\msc -I
 ..\components\libraries\usbd\config -I..\components\libraries\util -I..\compone
 nts\softdevice\common\softdevice_handler -I..\components\softdevice\s132\header
 s -I..\components\softdevice\s132\headers\nrf52 -I..\components\toolchain -I..\
-external\segger_rtt -I.\Application -IF:\Programming\FirmwareDesign1.0\eeg_coll
-ection\RTE -ID:\Applications\Keil5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -ID:\
-Applications\Keil5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.11.1\Dev
-ice\Include --predefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA
- 517" --predefine="_RTE_ SETA 1" --predefine="NRF52 SETA 1" --predefine="BLE_ST
-ACK_SUPPORT_REQD SETA 1" --predefine="S132 SETA 1" --predefine="NRF_SD_BLE_API_
-VERSION SETA 3" --predefine="BOARD_PCA10040 SETA 1" --predefine="NRF52_PAN_12 S
-ETA 1" --predefine="NRF52_PAN_15 SETA 1" --predefine="NRF52_PAN_20 SETA 1" --pr
-edefine="NRF52_PAN_31 SETA 1" --predefine="CONFIG_GPIO_AS_PINRESET SETA 1" --pr
-edefine="NRF52_PAN_36 SETA 1" --predefine="NRF52_PAN_51 SETA 1" --predefine="NR
-F52_PAN_54 SETA 1" --predefine="NRF52_PAN_55 SETA 1" --predefine="NRF52_PAN_58 
-SETA 1" --predefine="NRF52_PAN_64 SETA 1" --predefine="SOFTDEVICE_PRESENT SETA 
-1" --predefine="NRF52832 SETA 1" --predefine="NRF52 SETA 1" --predefine="SWI_DI
-SABLE0 SETA 1" --cpreproc_opts=-DBLE_STACK_SUPPORT_REQD,-DS132,-DNRF_SD_BLE_API
+external\segger_rtt -I.\Application -I..\components\libraries\fifo -I..\compone
+nts\ble\nrf_ble_gatt -IF:\Programming\FirmwareDesign1.0\eeg_collection\RTE -ID:
+\Applications\Keil5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include -ID:\Applications\Ke
+il5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.11.1\Device\Include --p
+redefine="__MICROLIB SETA 1" --predefine="__UVISION_VERSION SETA 517" --predefi
+ne="_RTE_ SETA 1" --predefine="NRF52 SETA 1" --predefine="BLE_STACK_SUPPORT_REQ
+D SETA 1" --predefine="S132 SETA 1" --predefine="NRF_SD_BLE_API_VERSION SETA 3"
+ --predefine="BOARD_PCA10040 SETA 1" --predefine="NRF52_PAN_12 SETA 1" --predef
+ine="NRF52_PAN_15 SETA 1" --predefine="NRF52_PAN_20 SETA 1" --predefine="NRF52_
+PAN_31 SETA 1" --predefine="CONFIG_GPIO_AS_PINRESET SETA 1" --predefine="NRF52_
+PAN_36 SETA 1" --predefine="NRF52_PAN_51 SETA 1" --predefine="NRF52_PAN_54 SETA
+ 1" --predefine="NRF52_PAN_55 SETA 1" --predefine="NRF52_PAN_58 SETA 1" --prede
+fine="NRF52_PAN_64 SETA 1" --predefine="SOFTDEVICE_PRESENT SETA 1" --predefine=
+"NRF52832 SETA 1" --predefine="NRF52 SETA 1" --predefine="SWI_DISABLE0 SETA 1" 
 
 
 
 ARM Macro Assembler    Page 11 
 
 
-_VERSION=3,-DBOARD_PCA10040,-DNRF52_PAN_12,-DNRF52_PAN_15,-DNRF52_PAN_20,-DNRF5
-2_PAN_31,-DCONFIG_GPIO_AS_PINRESET,-DNRF52_PAN_36,-DNRF52_PAN_51,-DNRF52_PAN_54
-,-DNRF52_PAN_55,-DNRF52_PAN_58,-DNRF52_PAN_64,-DSOFTDEVICE_PRESENT,-DNRF52832,-
-DNRF52,-DSWI_DISABLE0 --list=.\_build\arm_startup_nrf52.lst RTE\Device\nRF52832
-_xxAA\arm_startup_nrf52.s
+--cpreproc_opts=-DBLE_STACK_SUPPORT_REQD,-DS132,-DNRF_SD_BLE_API_VERSION=3,-DBO
+ARD_PCA10040,-DNRF52_PAN_12,-DNRF52_PAN_15,-DNRF52_PAN_20,-DNRF52_PAN_31,-DCONF
+IG_GPIO_AS_PINRESET,-DNRF52_PAN_36,-DNRF52_PAN_51,-DNRF52_PAN_54,-DNRF52_PAN_55
+,-DNRF52_PAN_58,-DNRF52_PAN_64,-DSOFTDEVICE_PRESENT,-DNRF52832,-DNRF52,-DSWI_DI
+SABLE0 --list=.\_build\arm_startup_nrf52.lst RTE\Device\nRF52832_xxAA\arm_start
+up_nrf52.s
 
 
 

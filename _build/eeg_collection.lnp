@@ -25,6 +25,7 @@
 ".\_build\security_manager.o"
 ".\_build\ble_bas.o"
 ".\_build\ble_nus.o"
+".\_build\ble_hrs.o"
 ".\_build\nrf_drv_clock.o"
 ".\_build\nrf_drv_common.o"
 ".\_build\nrf_drv_gpiote.o"

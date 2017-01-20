@@ -84,3 +84,5 @@
 .\_build\cherubimind_ble.o: ..\components\ble\ble_services\ble_bas\ble_bas.h
 .\_build\cherubimind_ble.o: ..\external\segger_rtt\SEGGER_RTT.h
 .\_build\cherubimind_ble.o: ..\external\segger_rtt\SEGGER_RTT_Conf.h
+.\_build\cherubimind_ble.o: ..\components\ble\ble_services\ble_hrs\ble_hrs.h
+.\_build\cherubimind_ble.o: ..\components\ble\nrf_ble_gatt\nrf_ble_gatt.h
