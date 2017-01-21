@@ -1281,7 +1281,7 @@
 // <e> PPI_ENABLED - nrf_drv_ppi - PPI peripheral driver
 //==========================================================
 #ifndef PPI_ENABLED
-#define PPI_ENABLED 0
+#define PPI_ENABLED 1
 #endif
 #if  PPI_ENABLED
 // <e> PPI_CONFIG_LOG_ENABLED - Enables logging in the module.
@@ -1888,7 +1888,7 @@
 // <e> SAADC_ENABLED - nrf_drv_saadc - SAADC peripheral driver
 //==========================================================
 #ifndef SAADC_ENABLED
-#define SAADC_ENABLED 0
+#define SAADC_ENABLED 1
 #endif
 #if  SAADC_ENABLED
 // <o> SAADC_CONFIG_RESOLUTION  - Resolution
@@ -1899,7 +1899,7 @@
 // <3=> 14 bit 
 
 #ifndef SAADC_CONFIG_RESOLUTION
-#define SAADC_CONFIG_RESOLUTION 1
+#define SAADC_CONFIG_RESOLUTION 2
 #endif
 
 // <o> SAADC_CONFIG_OVERSAMPLE  - Sample period
@@ -2297,7 +2297,7 @@
 // <e> TIMER_ENABLED - nrf_drv_timer - TIMER periperal driver
 //==========================================================
 #ifndef TIMER_ENABLED
-#define TIMER_ENABLED 0
+#define TIMER_ENABLED 1
 #endif
 #if  TIMER_ENABLED
 // <o> TIMER_DEFAULT_CONFIG_FREQUENCY  - Timer frequency if in Timer mode
@@ -2358,7 +2358,7 @@
  
 
 #ifndef TIMER0_ENABLED
-#define TIMER0_ENABLED 0
+#define TIMER0_ENABLED 1
 #endif
 
 // <q> TIMER1_ENABLED  - Enable TIMER1 instance

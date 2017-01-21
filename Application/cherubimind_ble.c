@@ -773,13 +773,13 @@ void hrm_update(void)
 void rri_update(void)
 {
 		static uint16_t rr_interval = 795;
-		//rr_interval += 5;
+		rr_interval += 5;
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-		//rr_interval += 5;
+		rr_interval += 5;
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-		//rr_interval += 5;
+		rr_interval += 5;
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
-		//rr_interval += 5;
+		rr_interval += 5;
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
 		if ( rr_interval > 1200 )
 				rr_interval = 795;

@@ -59,16 +59,19 @@ int main(void)
     err_code = NRF_LOG_INIT(NULL);
     APP_ERROR_CHECK(err_code);
 
+		saadc_init();
+    saadc_sampling_event_init();
+    saadc_sampling_event_enable();
     timers_init();
     buttons_leds_init(&erase_bonds);
     ble_stack_init();
     peer_manager_init(erase_bonds);
-    
     gap_params_init();
     advertising_init();
     services_init();
     conn_params_init();
 		uart_init();
+		
 
     // Start execution.
     application_timers_start();
@@ -76,7 +79,7 @@ int main(void)
     APP_ERROR_CHECK(err_code);
 
     // Enter main loop.
-		//SEGGER_RTT_printf(0, "start: 0x%#04x\n", 9999);
+		SEGGER_RTT_printf(0, "Cherubimind start: 0x%#04x\n", 9999);
     for (;;)
     {
         if (NRF_LOG_PROCESS() == false)
