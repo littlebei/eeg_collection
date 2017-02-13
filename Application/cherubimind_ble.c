@@ -186,9 +186,9 @@ void gap_params_init(void)
                                           strlen(DEVICE_NAME));
     APP_ERROR_CHECK(err_code);
 		
-	// set the appearence to CHERUBIMIND_SLEEP_GOGGLES, defined by Little Bei
-	err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_CHERUBIMIND_GOGGLES);
-	APP_ERROR_CHECK(err_code);
+		// set the appearence to CHERUBIMIND_SLEEP_GOGGLES, defined by Little Bei
+		err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_CHERUBIMIND_GOGGLES);
+		APP_ERROR_CHECK(err_code);
 
     memset(&gap_conn_params, 0, sizeof(gap_conn_params));
 
@@ -200,15 +200,17 @@ void gap_params_init(void)
     err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
 
-	// change the BLE address to RANDOM_PRIVATE_RESOLVABLE, with bugs
-	/*
-	ble_gap_addr_t *p_gap_address;
-	err_code = sd_ble_gap_addr_get(p_gap_address);
-	APP_ERROR_CHECK(err_code);
-	p_gap_address->addr_type = BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE;
-	err_code = sd_ble_gap_addr_set(p_gap_address);
-	APP_ERROR_CHECK(err_code);
-	*/
+		/*// change the BLE address to RANDOM_PRIVATE_RESOLVABLE, with bugs
+		ble_gap_privacy_params_t *ble_gap_privacy_params;
+		err_code = sd_ble_gap_privacy_get(ble_gap_privacy_params);
+		APP_ERROR_CHECK(err_code);
+		ble_gap_privacy_params->privacy_mode = BLE_GAP_PRIVACY_MODE_DEVICE_PRIVACY;
+		ble_gap_privacy_params->private_addr_type = BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE;
+		ble_gap_privacy_params->private_addr_cycle_s = BLE_GAP_DEFAULT_PRIVATE_ADDR_CYCLE_INTERVAL_S;
+		ble_gap_privacy_params->p_device_irk = NULL;
+		err_code = sd_ble_gap_privacy_set(ble_gap_privacy_params);
+		APP_ERROR_CHECK(err_code);
+		*/
 }
 
 
@@ -263,7 +265,7 @@ void services_init(void)
 		// Initialize NUS Service
 		ble_nus_init_t nus_init;
 		memset(&nus_init,0,sizeof(nus_init));
-		nus_init.data_handler = NULL;
+		nus_init.data_handler = nus_data_handler;
 		err_code = ble_nus_init(&m_nus, &nus_init);
 		APP_ERROR_CHECK(err_code);
 		
@@ -714,14 +716,14 @@ void bsp_event_handler(bsp_event_t event)
 void buttons_leds_init(bool * p_erase_bonds)
 {
     bsp_event_t startup_event;
-
+/*
     uint32_t err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS,
                                  APP_TIMER_TICKS(100, APP_TIMER_PRESCALER),
                                  bsp_event_handler);
 
     APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_btn_ble_init(NULL, &startup_event);
+*/
+    uint32_t err_code = bsp_btn_ble_init(NULL, &startup_event);
     APP_ERROR_CHECK(err_code);
 
     *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);

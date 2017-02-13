@@ -40,12 +40,15 @@
 .\_build\cherubimind.o: ..\components\softdevice\s132\headers\ble_gatts.h
 .\_build\cherubimind.o: ..\components\ble\common\ble_srv_common.h
 .\_build\cherubimind.o: ..\components\libraries\util\app_util.h
-.\_build\cherubimind.o: ..\components\libraries\timer\app_timer.h
-.\_build\cherubimind.o: ..\components\boards\pca10040.h
+.\_build\cherubimind.o: ..\components\libraries\bsp\bsp.h
+.\_build\cherubimind.o: ..\components\boards\boards.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_gpio.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_peripherals.h
 .\_build\cherubimind.o: D:\Applications\Keil5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.11.1\Device\Include\nrf52832_peripherals.h
 .\_build\cherubimind.o: D:\Applications\Keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\_build\cherubimind.o: ..\components\boards\pca10040.h
+.\_build\cherubimind.o: ..\components\libraries\button\app_button.h
+.\_build\cherubimind.o: ..\components\libraries\timer\app_timer.h
 .\_build\cherubimind.o: ..\external\segger_rtt\SEGGER_RTT.h
 .\_build\cherubimind.o: ..\external\segger_rtt\SEGGER_RTT_Conf.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_timer.h

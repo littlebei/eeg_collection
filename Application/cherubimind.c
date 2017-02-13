@@ -12,14 +12,34 @@
 #include "nrf_drv_saadc.h"
 #include "nrf_ppi.h"
 #include "nrf_drv_ppi.h"
+#include "boards.h"
+#include "bsp.h"
 
+// APP_TIMER
 APP_TIMER_DEF(m_battery_timer_id);                        /**< Battery timer. */
 APP_TIMER_DEF(m_heart_rate_timer_id);                     /**< Heart rate measurement timer. */
+APP_TIMER_DEF(m_timer_200ms_id); 
+APP_TIMER_DEF(m_timer_100ms_id); 
+APP_TIMER_DEF(m_timer_120ms_id); 
+APP_TIMER_DEF(m_timer_60ms_id); 
+APP_TIMER_DEF(m_timer_state1_id); 
+APP_TIMER_DEF(m_timer_state2_id); 
+APP_TIMER_DEF(m_timer_state3_id); 
+APP_TIMER_DEF(m_timer_state4_id);
 
+// SAADC
 static const nrf_drv_timer_t m_timer = NRF_DRV_TIMER_INSTANCE(1);
 static nrf_saadc_value_t     m_buffer_pool[2][SAMPLES_IN_BUFFER];
 static nrf_ppi_channel_t     m_ppi_channel;
 //static uint32_t              m_adc_evt_counter;
+
+// intervention
+static intervention_state_t intervention_state = STATE0;
+static intervention_mode_t intervention_mode = INTERVENTION_MODE_TEST;
+static uint32_t timer_interval_state1 = TIMER_INTERVAL_MODE_TEST_STATE1;
+static uint32_t timer_interval_state2 = TIMER_INTERVAL_MODE_TEST_STATE2;
+static uint32_t timer_interval_state3 = TIMER_INTERVAL_MODE_TEST_STATE3;
+static uint32_t timer_interval_state4 = TIMER_INTERVAL_MODE_TEST_STATE4;
 
 void timers_init(void)
 {
@@ -37,18 +57,75 @@ void timers_init(void)
                                 APP_TIMER_MODE_REPEATED,
                                 heart_rate_meas_timeout_handler);
     APP_ERROR_CHECK(err_code);
+	
+		// Create intervention timer.
+		err_code = app_timer_create(&m_timer_200ms_id,
+                                APP_TIMER_MODE_REPEATED,
+                                timer_200ms_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_timer_100ms_id,
+                                APP_TIMER_MODE_REPEATED,
+                                timer_100ms_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_120ms_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_120ms_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_create(&m_timer_60ms_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_60ms_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_state1_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_state1_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_state2_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_state2_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_state3_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_state3_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_state4_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_state4_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 /**@brief Function for starting timers.
  */
 void application_timers_start(void)
 {
 		uint32_t err_code;
+		
+		// battery service timer start
 		err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
 		APP_ERROR_CHECK(err_code); 
-	
+		
+		// heart rate service timer start
 		err_code = app_timer_start(m_heart_rate_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 
+}
+
+void intervention_timers_start(void)
+{
+		uint32_t err_code;
+		// intervention timer start
+		intervention_state = STATE1;
+		SEGGER_RTT_WriteString(0, "Intervention state1...\n");
+		err_code = app_timer_start(m_timer_100ms_id, TIMER_INTERVAL_100MS, NULL);
+    APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_start(m_timer_state1_id, timer_interval_state1, NULL);
+    APP_ERROR_CHECK(err_code);
 }
 
 void battery_measurement_timeout_handler(void * p_context)
@@ -62,6 +139,114 @@ static void heart_rate_meas_timeout_handler(void * p_context)
 {
 		rri_update();
 		hrm_update();
+}
+
+static void timer_200ms_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		led_off(0);
+		uint32_t err_code;
+		err_code = app_timer_start(m_timer_120ms_id, TIMER_INTERVAL_120MS, NULL);
+		APP_ERROR_CHECK(err_code);
+}
+static void timer_100ms_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		switch (intervention_state)
+		{
+			case STATE1:
+				led_off(0);
+				break;
+			case STATE4:
+				led_off(1);
+				break;
+			default:
+				break;
+		} 
+		
+		uint32_t err_code;
+		err_code = app_timer_start(m_timer_60ms_id, TIMER_INTERVAL_60MS, NULL); 
+		APP_ERROR_CHECK(err_code);
+}
+static void timer_120ms_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    led_on(0);
+}
+static void timer_60ms_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		switch (intervention_state)
+		{
+			case STATE1:
+				led_on(0);
+				break;
+			case STATE4:
+				led_on(1);
+				break;
+			default:
+				break;
+		}
+}
+
+static void timer_state1_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		intervention_state = STATE2;
+    uint32_t err_code;
+	
+		SEGGER_RTT_WriteString(0, "Intervention state2...\n");
+	
+		err_code = app_timer_stop(m_timer_100ms_id);
+		APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_start(m_timer_state2_id, timer_interval_state2, NULL);
+    APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_start(m_timer_200ms_id, TIMER_INTERVAL_200MS, NULL);
+    APP_ERROR_CHECK(err_code);
+		
+		led_off(0);
+}
+static void timer_state2_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		intervention_state = STATE3;
+    uint32_t err_code;
+	
+		SEGGER_RTT_WriteString(0, "Intervention state3...\n");
+	
+		err_code = app_timer_stop(m_timer_200ms_id);
+		APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_start(m_timer_state3_id, timer_interval_state3, NULL);
+    APP_ERROR_CHECK(err_code);	
+		
+		led_off(0);
+}
+static void timer_state3_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+		intervention_state = STATE4;
+    uint32_t err_code;
+		
+		SEGGER_RTT_WriteString(0, "Intervention state4...\n");
+	
+		err_code = app_timer_start(m_timer_100ms_id, TIMER_INTERVAL_100MS, NULL);
+    APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_start(m_timer_state4_id, timer_interval_state4, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+static void timer_state4_timeout_handler(void * p_context)
+{
+		UNUSED_PARAMETER(p_context);
+		intervention_state = STATE0;
+		uint32_t err_code;
+		err_code = app_timer_stop(m_timer_100ms_id);
+		APP_ERROR_CHECK(err_code);
+    
+		led_off(1);
 }
 
 void uart_init(void)
@@ -247,7 +432,50 @@ void uart_event_handle(app_uart_evt_t * p_event)
 
 void nus_data_handler (ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
-		// do nothing... handling the data received from BLE_NUS tx_char
+		SEGGER_RTT_WriteString(0, "Received data:\n");
+		for (int i=0; i<length; i++)
+			SEGGER_RTT_printf(0, "0x%#04x\n", p_data[i]);
+		if ( p_data[0] == 0xAA && p_data[1] == 0xAA)
+		{
+				uint8_t command_length = p_data[2];
+				uint8_t command_type = p_data[3];
+				if ( command_type == 0x11 && command_length == 0x01)
+				{
+						switch (p_data[4])
+						{
+								case 18:
+										intervention_mode = INTERVENTION_MODE_18MIN;
+										break;
+								case 25:
+										intervention_mode = INTERVENTION_MODE_25MIN;
+										break;
+								default:
+										intervention_mode = INTERVENTION_MODE_TEST;
+						}							
+						switch (intervention_mode)
+						{
+								case INTERVENTION_MODE_18MIN:
+										timer_interval_state1 = TIMER_INTERVAL_MODE_18MIN_STATE1;
+										timer_interval_state2 = TIMER_INTERVAL_MODE_18MIN_STATE2;
+										timer_interval_state3 = TIMER_INTERVAL_MODE_18MIN_STATE3;
+										timer_interval_state4 = TIMER_INTERVAL_MODE_18MIN_STATE4;
+										break;
+								case INTERVENTION_MODE_25MIN:
+										timer_interval_state1 = TIMER_INTERVAL_MODE_25MIN_STATE1;
+										timer_interval_state2 = TIMER_INTERVAL_MODE_25MIN_STATE2;
+										timer_interval_state3 = TIMER_INTERVAL_MODE_25MIN_STATE3;
+										timer_interval_state4 = TIMER_INTERVAL_MODE_25MIN_STATE4;
+										break;
+								default:
+										timer_interval_state1 = TIMER_INTERVAL_MODE_TEST_STATE1;
+										timer_interval_state2 = TIMER_INTERVAL_MODE_TEST_STATE2;
+										timer_interval_state3 = TIMER_INTERVAL_MODE_TEST_STATE3;
+										timer_interval_state4 = TIMER_INTERVAL_MODE_TEST_STATE4;
+						}
+						stop_current_state_timer();
+						intervention_timers_start();
+				}
+		}
 }
 
 static void timer_handler(nrf_timer_event_t event_type, void * p_context)
@@ -272,7 +500,7 @@ void saadc_sampling_event_init(void)
     APP_ERROR_CHECK(err_code);
 		//SEGGER_RTT_printf(0, "Timer initiation completed. err_code: %#04x\n" ,err_code);
 		
-    /* setup m_timer for compare event every 400ms */
+    /* setup m_timer for compare event  */
     uint32_t ticks = nrf_drv_timer_ms_to_ticks(&m_timer, SAADC_INTERVAL);
     nrf_drv_timer_extended_compare(&m_timer, NRF_TIMER_CC_CHANNEL0, ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, false);
     nrf_drv_timer_enable(&m_timer);
@@ -345,4 +573,135 @@ void saadc_init(void)
 		APP_ERROR_CHECK(err_code);
 	
 		//SEGGER_RTT_WriteString(0, "SAADC initiation completed.\n");
+}
+
+void led_on(uint32_t led_idx)
+{
+		bsp_board_led_off(led_idx);
+}
+
+void led_off(uint32_t led_idx)
+{
+		bsp_board_led_on(led_idx);
+}
+
+void intervention_init(void)
+{
+		SEGGER_RTT_WriteString(0, "Intervention initializing...\n");
+		intervention_state = STATE0;
+		led_off(0);
+		led_off(1);
+		//application_timers_start();
+}	
+
+void stop_current_state_timer(void)
+{
+		led_off(0);
+		led_off(1);
+		switch (intervention_state)
+		{
+				case STATE1:
+						app_timer_stop(m_timer_state1_id);
+						app_timer_stop(m_timer_100ms_id);
+						app_timer_stop(m_timer_60ms_id);
+						break;
+				case STATE2:
+						app_timer_stop(m_timer_state2_id);
+						app_timer_stop(m_timer_200ms_id);
+						app_timer_stop(m_timer_120ms_id);
+						break;
+				case STATE3:
+						app_timer_stop(m_timer_state3_id);
+						break;
+				case STATE4:
+						app_timer_stop(m_timer_state4_id);
+						app_timer_stop(m_timer_100ms_id);
+						app_timer_stop(m_timer_60ms_id);
+						break;
+				default:
+						break;
+		}
+}
+
+void start_current_state_timer(void)
+{
+		void *p;
+		switch (intervention_state)
+		{
+				case STATE0:
+						led_off(0);
+						led_off(1);
+						break;
+				case STATE1:
+						intervention_timers_start();
+						break;
+				case STATE2:
+						timer_state1_timeout_handler(p);
+						break;
+				case STATE3:
+						timer_state2_timeout_handler(p);
+						break;
+				case STATE4:
+						timer_state3_timeout_handler(p);
+						break;
+				default:
+						break;
+		}
+}
+
+void bsp_evt_handler(bsp_event_t evt)
+{
+		stop_current_state_timer();
+    switch (evt)
+    {
+        case BSP_EVENT_KEY_2:
+						SEGGER_RTT_WriteString(0, "Starting next intervention_state...\n");
+            if (intervention_state == STATE0)
+                intervention_state = STATE1;
+						else if(intervention_state == STATE1)
+                intervention_state = STATE2;
+            else if (intervention_state == STATE2)
+                intervention_state = STATE3;
+						else if (intervention_state == STATE3)
+                intervention_state = STATE4;
+						else if (intervention_state == STATE4)
+                intervention_state = STATE0;
+            break;
+
+        case BSP_EVENT_KEY_3:
+						SEGGER_RTT_WriteString(0, "Going back to last intervention_state...\n");
+            if (intervention_state == STATE0)
+                intervention_state = STATE4;
+						else if (intervention_state == STATE1)
+                intervention_state = STATE0;
+            else if (intervention_state == STATE2)
+                intervention_state = STATE1;
+						else if (intervention_state == STATE3)
+                intervention_state = STATE2;
+						else if (intervention_state == STATE4)
+                intervention_state = STATE3;
+            break;
+
+        default:
+            return; // no implementation needed
+    }
+    start_current_state_timer();
+}
+
+void bsp_configuration()
+{
+    uint32_t err_code;
+
+    err_code = bsp_init(BSP_INIT_LED | BSP_INIT_BUTTONS,
+                        APP_TIMER_TICKS(100, APP_TIMER_PRESCALER),
+                        bsp_evt_handler);
+    APP_ERROR_CHECK(err_code);
+		led_off(0);
+		led_off(1);
+}
+
+void led_init()
+{
+		led_off(0);
+		led_off(1);
 }
