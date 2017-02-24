@@ -34,3 +34,13 @@
 .\_build\ble_nus.o: ..\components\softdevice\s132\headers\ble_gattc.h
 .\_build\ble_nus.o: ..\components\softdevice\s132\headers\ble_gatts.h
 .\_build\ble_nus.o: ..\components\ble\common\ble_srv_common.h
+.\_build\ble_nus.o: ..\external\segger_rtt\SEGGER_RTT.h
+.\_build\ble_nus.o: ..\external\segger_rtt\SEGGER_RTT_Conf.h
+.\_build\ble_nus.o: ..\components\libraries\util\app_util_platform.h
+.\_build\ble_nus.o: ..\components\softdevice\s132\headers\nrf_soc.h
+.\_build\ble_nus.o: ..\components\softdevice\s132\headers\nrf_error_soc.h
+.\_build\ble_nus.o: ..\components\softdevice\s132\headers\nrf_nvic.h
+.\_build\ble_nus.o: ..\components\libraries\util\nrf_assert.h
+.\_build\ble_nus.o: ..\components\libraries\util\app_error.h
+.\_build\ble_nus.o: D:\Applications\Keil5\ARM\ARMCC\Bin\..\include\stdio.h
+.\_build\ble_nus.o: ..\components\libraries\util\app_error_weak.h

@@ -77,6 +77,7 @@
 .\_build\main.o: Application\cherubimind.h
 .\_build\main.o: ..\components\libraries\uart\app_uart.h
 .\_build\main.o: ..\components\ble\ble_services\ble_nus\ble_nus.h
+.\_build\main.o: ..\components\drivers_nrf\hal\nrf_saadc.h
 .\_build\main.o: ..\components\libraries\log\nrf_log.h
 .\_build\main.o: ..\components\libraries\log\src\nrf_log_internal.h
 .\_build\main.o: ..\components\libraries\log\nrf_log_ctrl.h

@@ -81,6 +81,7 @@
 .\_build\cherubimind_ble.o: Application\cherubimind.h
 .\_build\cherubimind_ble.o: ..\components\libraries\uart\app_uart.h
 .\_build\cherubimind_ble.o: ..\components\ble\ble_services\ble_nus\ble_nus.h
+.\_build\cherubimind_ble.o: ..\components\drivers_nrf\hal\nrf_saadc.h
 .\_build\cherubimind_ble.o: ..\components\ble\ble_services\ble_bas\ble_bas.h
 .\_build\cherubimind_ble.o: ..\external\segger_rtt\SEGGER_RTT.h
 .\_build\cherubimind_ble.o: ..\external\segger_rtt\SEGGER_RTT_Conf.h

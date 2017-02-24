@@ -48,13 +48,13 @@
 .\_build\cherubimind.o: D:\Applications\Keil5\ARM\ARMCC\Bin\..\include\stdlib.h
 .\_build\cherubimind.o: ..\components\boards\pca10040.h
 .\_build\cherubimind.o: ..\components\libraries\button\app_button.h
+.\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_saadc.h
+.\_build\cherubimind.o: D:\Applications\Keil5\ARM\ARMCC\Bin\..\include\stddef.h
 .\_build\cherubimind.o: ..\components\libraries\timer\app_timer.h
 .\_build\cherubimind.o: ..\external\segger_rtt\SEGGER_RTT.h
 .\_build\cherubimind.o: ..\external\segger_rtt\SEGGER_RTT_Conf.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_timer.h
-.\_build\cherubimind.o: D:\Applications\Keil5\ARM\ARMCC\Bin\..\include\stddef.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\timer\nrf_drv_timer.h
-.\_build\cherubimind.o: ..\components\drivers_nrf\hal\nrf_saadc.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\saadc\nrf_drv_saadc.h
 .\_build\cherubimind.o: ..\components\drivers_nrf\common\nrf_drv_common.h
 .\_build\cherubimind.o: ..\components\libraries\util\sdk_common.h

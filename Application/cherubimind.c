@@ -41,6 +41,13 @@ static uint32_t timer_interval_state2 = TIMER_INTERVAL_MODE_TEST_STATE2;
 static uint32_t timer_interval_state3 = TIMER_INTERVAL_MODE_TEST_STATE3;
 static uint32_t timer_interval_state4 = TIMER_INTERVAL_MODE_TEST_STATE4;
 
+// pulse detection
+static int BPM;                   // used to hold the pulse rate
+static int Signal;                // holds the incoming raw data
+static int IBI = 500;             // holds the time between beats, the Inter-Beat Interval
+static bool Pulse = false;     // true when pulse wave is high, false when it's low
+//static bool QS = false;        // becomes true when finds a beat.
+
 void timers_init(void)
 {
 
@@ -120,6 +127,8 @@ void intervention_timers_start(void)
 		uint32_t err_code;
 		// intervention timer start
 		intervention_state = STATE1;
+		led_off(0);
+		led_off(1);
 		SEGGER_RTT_WriteString(0, "Intervention state1...\n");
 		err_code = app_timer_start(m_timer_100ms_id, TIMER_INTERVAL_100MS, NULL);
     APP_ERROR_CHECK(err_code);
@@ -137,8 +146,7 @@ void battery_measurement_timeout_handler(void * p_context)
 
 static void heart_rate_meas_timeout_handler(void * p_context)
 {
-		rri_update();
-		hrm_update();
+		hrm_update(BPM);
 }
 
 static void timer_200ms_timeout_handler(void * p_context)
@@ -194,7 +202,7 @@ static void timer_state1_timeout_handler(void * p_context)
     UNUSED_PARAMETER(p_context);
 		intervention_state = STATE2;
     uint32_t err_code;
-	
+		
 		SEGGER_RTT_WriteString(0, "Intervention state2...\n");
 	
 		err_code = app_timer_stop(m_timer_100ms_id);
@@ -205,24 +213,26 @@ static void timer_state1_timeout_handler(void * p_context)
 	
 		err_code = app_timer_start(m_timer_200ms_id, TIMER_INTERVAL_200MS, NULL);
     APP_ERROR_CHECK(err_code);
-		
 		led_off(0);
+		led_off(1);
 }
 static void timer_state2_timeout_handler(void * p_context)
 {
     UNUSED_PARAMETER(p_context);
 		intervention_state = STATE3;
     uint32_t err_code;
-	
+		
 		SEGGER_RTT_WriteString(0, "Intervention state3...\n");
 	
 		err_code = app_timer_stop(m_timer_200ms_id);
 		APP_ERROR_CHECK(err_code);
+		err_code = app_timer_stop(m_timer_120ms_id);
+		APP_ERROR_CHECK(err_code);
 	
 		err_code = app_timer_start(m_timer_state3_id, timer_interval_state3, NULL);
-    APP_ERROR_CHECK(err_code);	
-		
+    APP_ERROR_CHECK(err_code);
 		led_off(0);
+		led_off(1);
 }
 static void timer_state3_timeout_handler(void * p_context)
 {
@@ -237,6 +247,8 @@ static void timer_state3_timeout_handler(void * p_context)
 	
 		err_code = app_timer_start(m_timer_state4_id, timer_interval_state4, NULL);
     APP_ERROR_CHECK(err_code);
+		led_off(0);
+		led_off(1);
 }
 static void timer_state4_timeout_handler(void * p_context)
 {
@@ -245,7 +257,10 @@ static void timer_state4_timeout_handler(void * p_context)
 		uint32_t err_code;
 		err_code = app_timer_stop(m_timer_100ms_id);
 		APP_ERROR_CHECK(err_code);
+		err_code = app_timer_stop(m_timer_60ms_id);
+		APP_ERROR_CHECK(err_code);
     
+		led_off(0);
 		led_off(1);
 }
 
@@ -529,23 +544,33 @@ static void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 {
     static uint8_t pulse_data_array[PULSE_DATA_ARRAY_LENGTH] = {0xAA, 0xAA, 16, 0x64, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 		static uint8_t pulse_data_index = PULSE_DATA_ARRAY_START_INDEX;
+		static uint8_t pulse_latency_counter = 0;
 		if (p_event->type == NRF_DRV_SAADC_EVT_DONE)
     {
-        ret_code_t err_code;
-
-        err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer, SAMPLES_IN_BUFFER);
+        ret_code_t err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer, SAMPLES_IN_BUFFER);
         APP_ERROR_CHECK(err_code);
-
 				//SEGGER_RTT_printf(0, "ADC event number: %#04x\n" ,m_adc_evt_counter++);
 
         for (int i = 0; i < SAMPLES_IN_BUFFER; i++)
         {
 						//SEGGER_RTT_printf(0, "%#04x\n" ,p_event->data.done.p_buffer[i]);
-						pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[i] & 0xFF00) >> 8);
-						pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[i] & 0x00FF) >> 0);
+						PulseSenosrCal(p_event->data.done.p_buffer[i]);
+						//pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[i] & 0xFF00) >> 8);
+						//pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[i] & 0x00FF) >> 0);
         }
-				data_send_by_nus(pulse_data_array, pulse_data_index);
-				pulse_data_index = PULSE_DATA_ARRAY_START_INDEX;
+				if (pulse_latency_counter == PULSE_LATENCY)
+				{
+						pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[0] & 0xFF00) >> 8);
+						pulse_data_array[pulse_data_index++] = (uint8_t) ((p_event->data.done.p_buffer[0] & 0x00FF) >> 0);
+						pulse_latency_counter = 0;
+				}
+				else
+						pulse_latency_counter++;
+				if (pulse_data_index == 20)
+				{
+						data_send_by_nus(pulse_data_array, pulse_data_index);
+						pulse_data_index = PULSE_DATA_ARRAY_START_INDEX;
+				}
     }
 }
 
@@ -704,4 +729,102 @@ void led_init()
 {
 		led_off(0);
 		led_off(1);
+}
+
+static void PulseSenosrCal(nrf_saadc_value_t data)
+{
+		// pulse detection
+		static int rate[MAX_RATE_ID];                    // used to hold last ten IBI values
+		static unsigned long sampleCounter = 0;          // used to determine pulse timing
+		static unsigned long lastBeatTime = 0;           // used to find the inter beat interval
+		static int Px = 0;                      // used to find peak in pulse wave
+		static int T = MAX_VALUE;                     // used to find trough in pulse wave
+		static int thresh = MAX_VALUE / 2;                // used to find instant moment of heart beat
+		static int amp = 0;                   // used to hold amplitude of pulse waveform
+		static bool firstBeat = true;        // used to seed rate array so we startup with reasonable BPM
+		static bool secondBeat = true;       // used to seed rate array so we startup with reasonable BPM
+
+		Signal = data;
+    //NPI_PrintValue("", Signal, 10);
+
+    sampleCounter += SAADC_INTERVAL;                         // keep track of the time in mS with this variable
+    int N = sampleCounter - lastBeatTime;       // monitor the time since the last beat to avoid noise
+
+//  find the peak and trough of the pulse wave
+    if(Signal < thresh && N > (IBI/5)*3)       // avoid dichrotic noise by waiting 3/5 of last IBI
+        if (Signal < T)                        // T is the trough
+            T = Signal;                         // keep track of lowest point in pulse wave 
+    if(Signal > thresh && Signal > Px)          // thresh condition helps avoid noise
+        Px = Signal;                             // P is the peak
+                                               // keep track of highest point in pulse wave
+    
+  //  NOW IT'S TIME TO LOOK FOR THE HEART BEAT
+  // signal surges up in value every time there is a pulse
+    if (N > 250)                                   // avoid high frequency noise
+    {  
+				if ( (Signal > thresh) && (Pulse == false) && (N > (IBI/5)*3) )        
+        {
+						Pulse = true;                               // set the Pulse flag when we think there is a pulse
+						IBI = sampleCounter - lastBeatTime;         // measure time between beats in mS
+						lastBeatTime = sampleCounter;               // keep track of time for next pulse
+             
+						if(firstBeat)                         // if it's the first time we found a beat, if firstBeat == TRUE
+						{
+								firstBeat = false;                 // clear firstBeat flag
+                return;                            // IBI value is unreliable so discard it
+						}   
+            if(secondBeat)                        // if this is the second beat, if secondBeat == TRUE
+            {
+								secondBeat = false;                 // clear secondBeat flag
+								for(int i=0; i<MAX_RATE_ID; i++)         // seed the running total to get a realisitic BPM at startup
+										rate[i] = IBI;                      
+						}
+              
+						// keep a running total of the last 10 IBI values
+						int runningTotal = 0;                   // clear the runningTotal variable    
+
+						for(int i=0; i<=MAX_RATE_ID-2; i++)                // shift data in the rate array
+						{      
+								rate[i] = rate[i+1];              // and drop the oldest IBI value 
+								runningTotal += rate[i];          // add up the 9 oldest IBI values
+						}
+								
+						rate[MAX_RATE_ID-1] = IBI;                          // add the latest IBI to the rate array
+						runningTotal += rate[MAX_RATE_ID-1];                // add the latest IBI to runningTotal
+						runningTotal /= MAX_RATE_ID;                     // average the last 10 IBI values 
+						BPM = 60000/runningTotal;               // how many beats can fit into a minute? that's BPM!
+						//QS = true;                              // set Quantified Self flag 
+
+						if(BPM>55 && BPM<135)
+						{
+								rri_update(IBI);
+						}
+						else
+						{
+								BPM = 0;
+						}
+						// QS FLAG IS NOT CLEARED INSIDE THIS ISR
+				}                       
+    }
+
+		if (Signal < thresh && Pulse == true)     // when the values are going down, the beat is over
+    {  
+				Pulse = false;                         // reset the Pulse flag so we can do it again
+				amp = Px - T;                           // get amplitude of the pulse wave
+				thresh = amp/2 + T;                    // set thresh at 50% of the amplitude
+				Px = thresh;                            // reset these for next time
+				T = thresh;
+    }
+  
+		if (N > 2500)                             // if 2.5 seconds go by without a beat
+    {  
+				BPM = 0;
+				thresh = MAX_VALUE / 2;                          // set thresh default
+				Px = 0;                               // set P default
+				T = MAX_VALUE;                               // set T default
+				
+				lastBeatTime = sampleCounter;          // bring the lastBeatTime up to date        
+				firstBeat = true;                      // set these to avoid noise
+				secondBeat = true;                     // when we get the heartbeat back
+		}
 }

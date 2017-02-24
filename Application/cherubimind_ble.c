@@ -757,12 +757,14 @@ void battery_level_update(void)
     }
 }
 
-void hrm_update(void)
+void hrm_update(int heart_rate)
 {
+		/*
 		static uint16_t heart_rate = 59;
 		heart_rate++;
 		if ( heart_rate > 100 ) 
 			heart_rate = 60;
+		*/		
 		uint32_t err_code;
 		err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
 		if ((err_code != NRF_SUCCESS) &&
@@ -772,8 +774,9 @@ void hrm_update(void)
 				APP_ERROR_HANDLER(err_code);
 }
 
-void rri_update(void)
+void rri_update(int IBI)
 {
+		/*
 		static uint16_t rr_interval = 795;
 		rr_interval += 5;
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
@@ -785,4 +788,5 @@ void rri_update(void)
 		ble_hrs_rr_interval_add(&m_hrs, rr_interval);
 		if ( rr_interval > 1200 )
 				rr_interval = 795;
+		*/
 }

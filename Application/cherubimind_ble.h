@@ -193,6 +193,6 @@ uint32_t data_send_by_nus(uint8_t * p_string, uint16_t length);
 
 void battery_level_update(void);
 
-void hrm_update(void);
+void hrm_update(int heart_rate);
 
-void rri_update(void);
+void rri_update(int IBI);
