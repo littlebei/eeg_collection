@@ -26,6 +26,7 @@ APP_TIMER_DEF(m_timer_state1_id);
 APP_TIMER_DEF(m_timer_state2_id); 
 APP_TIMER_DEF(m_timer_state3_id); 
 APP_TIMER_DEF(m_timer_state4_id);
+APP_TIMER_DEF(m_timer_state_intro_id);
 
 // SAADC
 static const nrf_drv_timer_t m_timer = NRF_DRV_TIMER_INSTANCE(1);
@@ -36,6 +37,7 @@ static nrf_ppi_channel_t     m_ppi_channel;
 // intervention
 static intervention_state_t intervention_state = STATE0;
 static intervention_mode_t intervention_mode = INTERVENTION_MODE_TEST;
+static uint32_t timer_interval_state_intro = TIMER_INTERVAL_MODE_20MIN_STATE_INTRO;
 static uint32_t timer_interval_state1 = TIMER_INTERVAL_MODE_TEST_STATE1;
 static uint32_t timer_interval_state2 = TIMER_INTERVAL_MODE_TEST_STATE2;
 static uint32_t timer_interval_state3 = TIMER_INTERVAL_MODE_TEST_STATE3;
@@ -105,6 +107,11 @@ void timers_init(void)
                                 APP_TIMER_MODE_SINGLE_SHOT,
                                 timer_state4_timeout_handler);
     APP_ERROR_CHECK(err_code);
+		
+		err_code = app_timer_create(&m_timer_state_intro_id,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                timer_state_intro_timeout_handler);
+    APP_ERROR_CHECK(err_code);
 }
 /**@brief Function for starting timers.
  */
@@ -122,7 +129,17 @@ void application_timers_start(void)
 
 }
 
-void intervention_timers_start(void)
+void intervention_state_intro_start()
+{
+		intervention_state = STATE_INTRO;
+		led_off(0);
+		led_off(1);
+		SEGGER_RTT_WriteString(0, "Intervention state_INTRO...\n");
+		uint32_t err_code = app_timer_start(m_timer_state_intro_id, timer_interval_state_intro, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+void intervention_state1_start(void)
 {
 		uint32_t err_code;
 		// intervention timer start
@@ -262,6 +279,12 @@ static void timer_state4_timeout_handler(void * p_context)
     
 		led_off(0);
 		led_off(1);
+}
+
+static void timer_state_intro_timeout_handler(void * p_context)
+{
+		UNUSED_PARAMETER(p_context);
+		intervention_state1_start();
 }
 
 void uart_init(void)
@@ -450,13 +473,14 @@ void nus_data_handler (ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 		SEGGER_RTT_WriteString(0, "Received data:\n");
 		for (int i=0; i<length; i++)
 			SEGGER_RTT_printf(0, "0x%#04x\n", p_data[i]);
-		if ( p_data[0] == 0xAA && p_data[1] == 0xAA)
+		if ( p_data[0] == COMMAND_SYNC_BYTE && p_data[1] == COMMAND_SYNC_BYTE)
 		{
 				uint8_t command_length = p_data[2];
 				uint8_t command_type = p_data[3];
-				if ( command_type == 0x11 && command_length == 0x01)
+				uint8_t command_value = p_data[4];
+				if ( command_type == COMMAND_TYPE_INTERVENTION_MODE && command_length == 0x01)
 				{
-						switch (p_data[4])
+						switch (command_value)
 						{
 								case 18:
 										intervention_mode = INTERVENTION_MODE_18MIN;
@@ -464,31 +488,59 @@ void nus_data_handler (ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 								case 25:
 										intervention_mode = INTERVENTION_MODE_25MIN;
 										break;
+								case 20:
+										intervention_mode = INTERVENTION_MODE_20MIN;
+										break;
+								case 27:
+										intervention_mode = INTERVENTION_MODE_27MIN;
+										break;
 								default:
 										intervention_mode = INTERVENTION_MODE_TEST;
-						}							
+						}
+				//}
+				//if ( command_type == COMMAND_TYPE_INTERVENTION_CONTROL && command_length == 0x01 && command_value == COMMAND_VALUE_INTERVENTION_CONTROL_START)
+				//{
+						stop_current_state_timer();
 						switch (intervention_mode)
 						{
+								case INTERVENTION_MODE_20MIN:
+										timer_interval_state_intro = TIMER_INTERVAL_MODE_20MIN_STATE_INTRO;
+										timer_interval_state1 = TIMER_INTERVAL_MODE_20MIN_STATE1;
+										timer_interval_state2 = TIMER_INTERVAL_MODE_20MIN_STATE2;
+										timer_interval_state3 = TIMER_INTERVAL_MODE_20MIN_STATE3;
+										timer_interval_state4 = TIMER_INTERVAL_MODE_20MIN_STATE4;
+										intervention_state_intro_start();
+										break;
 								case INTERVENTION_MODE_18MIN:
 										timer_interval_state1 = TIMER_INTERVAL_MODE_18MIN_STATE1;
 										timer_interval_state2 = TIMER_INTERVAL_MODE_18MIN_STATE2;
 										timer_interval_state3 = TIMER_INTERVAL_MODE_18MIN_STATE3;
 										timer_interval_state4 = TIMER_INTERVAL_MODE_18MIN_STATE4;
+										intervention_state1_start();
 										break;
+								case INTERVENTION_MODE_27MIN:
+										timer_interval_state_intro = TIMER_INTERVAL_MODE_27MIN_STATE_INTRO;
+										timer_interval_state1 = TIMER_INTERVAL_MODE_27MIN_STATE1;
+										timer_interval_state2 = TIMER_INTERVAL_MODE_27MIN_STATE2;
+										timer_interval_state3 = TIMER_INTERVAL_MODE_27MIN_STATE3;
+										timer_interval_state4 = TIMER_INTERVAL_MODE_27MIN_STATE4;
+										intervention_state_intro_start();
 								case INTERVENTION_MODE_25MIN:
 										timer_interval_state1 = TIMER_INTERVAL_MODE_25MIN_STATE1;
 										timer_interval_state2 = TIMER_INTERVAL_MODE_25MIN_STATE2;
 										timer_interval_state3 = TIMER_INTERVAL_MODE_25MIN_STATE3;
 										timer_interval_state4 = TIMER_INTERVAL_MODE_25MIN_STATE4;
+										intervention_state1_start();
 										break;
 								default:
 										timer_interval_state1 = TIMER_INTERVAL_MODE_TEST_STATE1;
 										timer_interval_state2 = TIMER_INTERVAL_MODE_TEST_STATE2;
 										timer_interval_state3 = TIMER_INTERVAL_MODE_TEST_STATE3;
 										timer_interval_state4 = TIMER_INTERVAL_MODE_TEST_STATE4;
+										intervention_state1_start();
 						}
-						stop_current_state_timer();
-						intervention_timers_start();
+						
+						
 				}
 		}
 }
@@ -614,15 +666,11 @@ void intervention_init(void)
 {
 		SEGGER_RTT_WriteString(0, "Intervention initializing...\n");
 		intervention_state = STATE0;
-		led_off(0);
-		led_off(1);
 		//application_timers_start();
 }	
 
 void stop_current_state_timer(void)
 {
-		led_off(0);
-		led_off(1);
 		switch (intervention_state)
 		{
 				case STATE1:
@@ -646,6 +694,8 @@ void stop_current_state_timer(void)
 				default:
 						break;
 		}
+		led_off(0);
+		led_off(1);
 }
 
 void start_current_state_timer(void)
@@ -658,7 +708,7 @@ void start_current_state_timer(void)
 						led_off(1);
 						break;
 				case STATE1:
-						intervention_timers_start();
+						intervention_state1_start();
 						break;
 				case STATE2:
 						timer_state1_timeout_handler(p);
@@ -727,8 +777,8 @@ void bsp_configuration()
 
 void led_init()
 {
-		led_off(0);
-		led_off(1);
+		led_on(0);
+		led_on(1);
 }
 
 static void PulseSenosrCal(nrf_saadc_value_t data)

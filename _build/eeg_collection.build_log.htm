@@ -27,7 +27,17 @@ Project File Date:  02/14/2017
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 1 (build 61)', folder: 'D:\Applications\Keil5\ARM\ARMCC\Bin'
 Build target 'FD_nRF52832_eeg'
-".\_build\eeg_collection.axf" - 0 Error(s), 0 Warning(s).
+compiling main.c...
+compiling cherubimind.c...
+Application\cherubimind.c(634): warning:  #188-D: enumerated type mixed with another type
+  		
+RF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+Application\cherubimind.c: 1 warning, 0 errors
+compiling cherubimind_ble.c...
+linking...
+Program Size: Code=51108 RO-data=1692 RW-data=476 ZI-data=12084  
+FromELF: creating hex file...
+".\_build\eeg_collection.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -54,9 +64,9 @@ Package Vendor: NordicSemiconductor
 
    * Component: NordicSemiconductor::Device:Startup:8.11.1
       Include file:  Device\Include\system_nrf52.h
-      Source file:   Device\Source\arm\arm_startup_nrf52.s
       Source file:   Device\Source\system_nrf52.c
-Build Time Elapsed:  00:00:03
+      Source file:   Device\Source\arm\arm_startup_nrf52.s
+Build Time Elapsed:  00:00:05
 </pre>
 </body>
 </html>

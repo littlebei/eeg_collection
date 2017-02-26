@@ -22,10 +22,20 @@
 #define TIMER_INTERVAL_MODE_18MIN_STATE2      	APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_18MIN_STATE3     		APP_TIMER_TICKS(630000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_18MIN_STATE4     		APP_TIMER_TICKS(90000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_20MIN_STATE_INTRO		APP_TIMER_TICKS(135000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_20MIN_STATE1      	APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_20MIN_STATE2      	APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_20MIN_STATE3     		APP_TIMER_TICKS(628000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_20MIN_STATE4     		APP_TIMER_TICKS(92000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_25MIN_STATE1     		APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_25MIN_STATE2     		APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_25MIN_STATE3     		APP_TIMER_TICKS(1050000, APP_TIMER_PRESCALER)
 #define TIMER_INTERVAL_MODE_25MIN_STATE4     		APP_TIMER_TICKS(90000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_27MIN_STATE_INTRO		APP_TIMER_TICKS(135000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_27MIN_STATE1      	APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_27MIN_STATE2      	APP_TIMER_TICKS(180000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_27MIN_STATE3     		APP_TIMER_TICKS(1048000, APP_TIMER_PRESCALER)
+#define TIMER_INTERVAL_MODE_27MIN_STATE4     		APP_TIMER_TICKS(92000, APP_TIMER_PRESCALER)
 
 // Macro define used by UART
 #define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
@@ -44,7 +54,7 @@ typedef enum
 		EEG_PARSER_STATE_CHECKSUM
 } eeg_parser_state_t;
 
-#define SMALL_PACKAGE_LATENCY 		7
+#define SMALL_PACKAGE_LATENCY 		7		// eeg display rate = 512Hz/(1+SMALL_PACKAGE_LATENCY)
 #define MAX_EEG_DATA_IN_BLE_MTU 	8
 #define EEG_DATA_ARRAY_START_INDEX 	4
 #define EEG_DATA_ARRAY_LENGTH 		2*MAX_EEG_DATA_IN_BLE_MTU+EEG_DATA_ARRAY_START_INDEX
@@ -58,8 +68,17 @@ typedef enum
 #define EEG_DATA_SMALL_PACKAGE_PAYLOAD_LENGTH 	4
 #define EEG_DATA_BIG_PACKAGE_PAYLOAD_LENGTH 		32
 
+// Macro define used by nus_data_handler
+#define COMMAND_SYNC_BYTE 0xAA
+#define COMMAND_TYPE_INTERVENTION_MODE 0x11
+#define COMMAND_TYPE_INTERVENTION_CONTROL 0x10
+#define COMMAND_VALUE_INTERVENTION_CONTROL_START 0x00
+#define COMMAND_VALUE_INTERVENTION_CONTROL_PAUSE 0x01
+#define COMMAND_VALUE_INTERVENTION_CONTROL_RESUME 0x02
+#define COMMAND_VALUE_INTERVENTION_CONTROL_STOP 0x03
+
 // Macro define used by SAADC
-#define SAADC_INTERVAL 2		// sample interval of the pulse signal
+#define SAADC_INTERVAL 2		// sample interval of the pulse signal, saadc_sample_rate = 1000 / SAADC_INTERVAL
 #define SAMPLES_IN_BUFFER 8
 
 // Macro define used by pulse
@@ -68,11 +87,12 @@ typedef enum
 #define PULSE_DATA_ARRAY_LENGTH 		2*MAX_PULSE_DATA_IN_BLE_MTU+PULSE_DATA_ARRAY_START_INDEX
 #define  MAX_VALUE      (4096)   // 12bit resolution, max value is 4096
 #define  MAX_RATE_ID     6       // should biger than 5, number of the beats used to calculate the average HR
-#define PULSE_LATENCY 1
+#define PULSE_LATENCY 1		// pulse_display_rate = saadc_sample_rate / SAMPLES_IN_BUFFER / (1+PULSE_LATENCY)
 
 // Macro define used by intervention
 typedef enum
 {
+		STATE_INTRO,
 		STATE0,
 		STATE1,
 		STATE2,
@@ -83,7 +103,9 @@ typedef enum
 {
 		INTERVENTION_MODE_TEST,
 		INTERVENTION_MODE_18MIN,
-		INTERVENTION_MODE_25MIN
+		INTERVENTION_MODE_20MIN,
+		INTERVENTION_MODE_25MIN,
+		INTERVENTION_MODE_27MIN
 } intervention_mode_t;
 
 /**@brief Function for the Timer initialization.
@@ -95,7 +117,8 @@ void timers_init(void);
 /**@brief Function for starting timers.
  */
 void application_timers_start(void);
-void intervention_timers_start(void);
+void intervention_state1_start(void);
+void intervention_state_intro_start(void);
 void battery_measurement_timeout_handler(void * p_context);
 void battery_level_update(void);
 void uart_init(void);
@@ -123,6 +146,7 @@ static void timer_state1_timeout_handler(void * p_context);
 static void timer_state2_timeout_handler(void * p_context);
 static void timer_state3_timeout_handler(void * p_context);
 static void timer_state4_timeout_handler(void * p_context);
+static void timer_state_intro_timeout_handler(void * p_context);
 void bsp_configuration(void);
 void led_init(void);
 static void PulseSenosrCal(nrf_saadc_value_t data);
